@@ -20,7 +20,7 @@ namespace FileManagerBackend.Controllers
         private readonly ILogger<FileManagerController> _logger;
         private readonly IConfiguration _Configuration;
 
-        //<LoginError>, <DatabaseError>, <LoggedOut>, <NotLoggedIn>, <ListError>, <DeleteError>,  <CopyError>, <CopySuccessful>, <DeleteSuccessful> || <FolderCreateSucessful>, <FolderCreateError>, FolderDeleteError,FolderDeleteSucessful || UploadSucessful, UploadError || "<DownloadError>", FileError
+        //<LoginError>, <DatabaseError>, <LoggedOut>, <NotLoggedIn>, <ListError>, <DeleteError>,  <CopyError>, <CopySuccessful>, <DeleteSuccessful> || <FolderCreateSucessful>, <FolderCreateError>, FolderDeleteError,FolderDeleteSucessful || UploadSucessful, UploadError || "<DownloadError>", FileError || RenameSucessfull, "<RenameError>"
 
         public FileManagerController(ILogger<FileManagerController> logger, IConfiguration configuration)
         {
@@ -426,7 +426,13 @@ namespace FileManagerBackend.Controllers
                         {
                             foreach (var FullFilePath in FullFilePaths)
                             {
-                                string RelPath = FullFilePath.Replace(BasePath.TrimStart('/'), "").TrimStart('/');
+                                string RelPath = FullFilePath.TrimStart('/');
+                                
+                                if (BasePath.TrimStart('/') != "")
+                                {
+                                    RelPath = FullFilePath.Replace(BasePath.TrimStart('/'), "").TrimStart('/');
+                                }
+                                
 
                                 var entry = archive.CreateEntry(RelPath);
                                 using (var entryStream = entry.Open())
@@ -460,7 +466,6 @@ namespace FileManagerBackend.Controllers
 
         [Route("GetFileType")]
         [HttpPost]
-        [DisableRequestSizeLimit]
         public async Task<ResponseModel> GetFileType(string FilePath)
         {
 
@@ -552,6 +557,58 @@ namespace FileManagerBackend.Controllers
             else
             {
                 return Problem("<NotLoggedIn>");
+            }
+        }
+
+        [Route("RenameFileOrFolder")]
+        [HttpPost]
+        public async Task<ResponseModel> RenameFileOrFolder(string Path, string NewName)
+        {
+
+            if (IsLoggedIn())
+            {
+                try
+                {
+
+                    string UserPath = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).RootPath;
+
+                    if (!Path.Contains(".."))
+                    {
+                        Path = Path.TrimStart('/');
+                        Path = Path.TrimEnd('/');
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Prevented access to subfolder, attempted by user: " + ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).Username);
+                        return new ResponseModel(true, "<RenameError>");
+                    }
+
+                    string FullPath = System.IO.Path.Combine(UserPath, Path);
+
+                    if (System.IO.File.Exists(FullPath))
+                    {
+                        System.IO.File.Move(FullPath, NewName);
+                    } else if (System.IO.Directory.Exists(FullPath))
+                    {
+                        Directory.Move(FullPath, NewName);
+                    } else
+                    {
+                        return new ResponseModel(true, "<RenameError>");
+                    }
+
+                    return new ResponseModel(false, "<RenameSucessfull>");
+
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError("Download error: " + e.ToString());
+
+                    return new ResponseModel(true, "<FileError>");
+                }
+            }
+            else
+            {
+                return new ResponseModel(true, "<NotLoggedIn>");
             }
         }
 

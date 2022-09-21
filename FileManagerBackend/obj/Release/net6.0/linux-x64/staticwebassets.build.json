@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "5VByRuUqEhpST29O2+d345U2hsYKU2IvtWKzf9OlA70=",
+  "Source": "FileManagerBackend",
+  "BasePath": "_content/FileManagerBackend",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
