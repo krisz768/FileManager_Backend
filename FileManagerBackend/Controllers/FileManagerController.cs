@@ -562,7 +562,7 @@ namespace FileManagerBackend.Controllers
 
         [Route("RenameFileOrFolder")]
         [HttpPost]
-        public async Task<ResponseModel> RenameFileOrFolder(string Path, string NewName)
+        public async Task<ResponseModel> RenameFileOrFolder(string Path, string OldName, string NewName)
         {
 
             if (IsLoggedIn())
@@ -572,7 +572,7 @@ namespace FileManagerBackend.Controllers
 
                     string UserPath = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).RootPath;
 
-                    if (!Path.Contains(".."))
+                    if (!Path.Contains("..") && !OldName.Contains("..") && !OldName.Contains("/") && !NewName.Contains("..") && !NewName.Contains("/"))
                     {
                         Path = Path.TrimStart('/');
                         Path = Path.TrimEnd('/');
@@ -587,10 +587,10 @@ namespace FileManagerBackend.Controllers
 
                     if (System.IO.File.Exists(FullPath))
                     {
-                        System.IO.File.Move(FullPath, NewName);
+                        System.IO.File.Move(FullPath + "/" + OldName, FullPath + "/" + NewName);
                     } else if (System.IO.Directory.Exists(FullPath))
                     {
-                        Directory.Move(FullPath, NewName);
+                        Directory.Move(FullPath + "/" + OldName, FullPath + "/" + NewName);
                     } else
                     {
                         return new ResponseModel(true, "<RenameError>");

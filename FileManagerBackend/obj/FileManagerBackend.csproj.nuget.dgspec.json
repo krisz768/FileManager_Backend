@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\tillk\\Documents\\GitHub\\FileManager_Backend\\FileManagerBackend\\FileManagerBackend.csproj": {}
+    "D:\\vs_projektek\\FileManagerBackend\\FileManagerBackend\\FileManagerBackend.csproj": {}
   },
   "projects": {
-    "C:\\Users\\tillk\\Documents\\GitHub\\FileManager_Backend\\FileManagerBackend\\FileManagerBackend.csproj": {
+    "D:\\vs_projektek\\FileManagerBackend\\FileManagerBackend\\FileManagerBackend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\tillk\\Documents\\GitHub\\FileManager_Backend\\FileManagerBackend\\FileManagerBackend.csproj",
+        "projectUniqueName": "D:\\vs_projektek\\FileManagerBackend\\FileManagerBackend\\FileManagerBackend.csproj",
         "projectName": "FileManagerBackend",
-        "projectPath": "C:\\Users\\tillk\\Documents\\GitHub\\FileManager_Backend\\FileManagerBackend\\FileManagerBackend.csproj",
-        "packagesPath": "C:\\Users\\tillk\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\tillk\\Documents\\GitHub\\FileManager_Backend\\FileManagerBackend\\obj\\",
+        "projectPath": "D:\\vs_projektek\\FileManagerBackend\\FileManagerBackend\\FileManagerBackend.csproj",
+        "packagesPath": "C:\\Users\\Krisztian\\.nuget\\packages\\",
+        "outputPath": "D:\\vs_projektek\\FileManagerBackend\\FileManagerBackend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\tillk\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Krisztian\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -59,8 +59,7 @@
             "net47",
             "net471",
             "net472",
-            "net48",
-            "net481"
+            "net48"
           ],
           "assetTargetFallback": true,
           "warn": true,
@@ -72,7 +71,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.401\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.301\\RuntimeIdentifierGraph.json"
         }
       }
     }
