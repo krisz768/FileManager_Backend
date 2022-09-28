@@ -612,6 +612,52 @@ namespace FileManagerBackend.Controllers
             }
         }
 
+        [Route("CreateShare")]
+        [HttpPost]
+        public async Task<ResponseModel> CreateSharePost(string SharePath)
+        {
+            if (IsLoggedIn())
+            {
+                if (!SharePath.Contains(".."))
+                {
+                    try
+                    {
+                        SharePath = SharePath.TrimStart('/');
+                        SharePath = Path.Combine(ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).RootPath, SharePath);
+
+                        bool IsFile = false;
+
+                        if (System.IO.File.Exists(SharePath))
+                        {
+                            IsFile = true;
+                        }
+                        else if (System.IO.Directory.Exists(SharePath))
+                        {
+                            IsFile=false;
+                        }
+                        else
+                        {
+                            return new ResponseModel(true, "<ShareError>");
+                        }
+
+                    }
+                    catch (Exception e)
+                    {
+                        return new ResponseModel(true, "<ShareError>");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Prevented access to subfolder, attempted by user: " + ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).Username);
+                    return new ResponseModel(true, "<ShareError>");
+                }
+            }
+            else
+            {
+                return new ResponseModel(true, "<NotLoggedIn>");
+            }
+        }
+
 
 
 

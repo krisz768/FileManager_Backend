@@ -50,5 +50,34 @@ namespace FileManagerBackend.Service.FileManager
                 throw new HttpRequestException("<DatabaseError>");
             }
         }
+
+        public async Task<Fm_User> CreateShare()
+        {
+            try
+            {
+                OpenConnection();
+
+                Fm_User User = null;
+
+                string CommandString = "SELECT * FROM `Users` WHERE `Username` = BINARY ?;";
+                var Command = new MySqlCommand(CommandString, MySqlConn);
+
+                Command.Parameters.AddWithValue("username", Username);
+
+                using (var reader = await Command.ExecuteReaderAsync())
+                {
+                    while (reader.Read())
+                    {
+                        User = new Fm_User(Convert.ToInt32(reader["Id"]), reader["Username"].ToString(), reader["Password"].ToString(), reader["RootPath"].ToString());
+                    }
+                }
+
+                return User;
+            }
+            catch
+            {
+                throw new HttpRequestException("<DatabaseError>");
+            }
+        }
     }
 }
