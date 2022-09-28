@@ -640,6 +640,11 @@ namespace FileManagerBackend.Controllers
                             return new ResponseModel(true, "<ShareError>");
                         }
 
+                        int OwnerId = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).Id;
+
+                        Fm_Share NewShare = await Fm_Share.CreateNewShare(OwnerId, SharePath,IsFile);
+
+                        return new ResponseModel(true, NewShare.Link);
                     }
                     catch (Exception e)
                     {

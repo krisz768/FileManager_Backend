@@ -51,28 +51,23 @@ namespace FileManagerBackend.Service.FileManager
             }
         }
 
-        public async Task<Fm_User> CreateShare()
+        public async Task<long> CreateShare(string Link, int Owner, string RelPath, bool IsFile)
         {
             try
             {
                 OpenConnection();
 
-                Fm_User User = null;
-
-                string CommandString = "SELECT * FROM `Users` WHERE `Username` = BINARY ?;";
+                string CommandString = "INSERT INTO `Shares`(`Link`, `Owner`, `RelPath`, `IsFile`) VALUES (@Link,@Owner,@RelPath,@IsFile);";
                 var Command = new MySqlCommand(CommandString, MySqlConn);
 
-                Command.Parameters.AddWithValue("username", Username);
+                Command.Parameters.AddWithValue("@Link", Link);
+                Command.Parameters.AddWithValue("@Owner", Owner);
+                Command.Parameters.AddWithValue("@RelPath", RelPath);
+                Command.Parameters.AddWithValue("@IsFile", IsFile);
 
-                using (var reader = await Command.ExecuteReaderAsync())
-                {
-                    while (reader.Read())
-                    {
-                        User = new Fm_User(Convert.ToInt32(reader["Id"]), reader["Username"].ToString(), reader["Password"].ToString(), reader["RootPath"].ToString());
-                    }
-                }
-
-                return User;
+                await Command.ExecuteNonQueryAsync();
+                long Id = Command.LastInsertedId;
+                return Id;
             }
             catch
             {
