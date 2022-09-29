@@ -625,6 +625,7 @@ namespace FileManagerBackend.Controllers
                         SharePath = SharePath.TrimStart('/');
                         Fm_User User = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject"));
 
+
                         Fm_Share ExistingLink = await Fm_Share.GetShareByRelPathAndOwner(User.Id, SharePath);
 
                         if (ExistingLink != null)
