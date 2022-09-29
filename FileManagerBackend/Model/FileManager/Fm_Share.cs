@@ -36,6 +36,12 @@ namespace FileManagerBackend.Model.FileManager
             return new Fm_Share(Id, Link,Owner, RelPath, IsFile,0,true);
         }
 
+        public static async Task<Fm_Share> GetShareByRelPathAndOwner(int Owner, string RelPath)
+        {
+            Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
+            return await fm_DbCommands.GetShareByOwnerAndRelPath( Owner, RelPath);
+        }
+
         private static string MD5Hash(string input)
         {
             using (var md5 = MD5.Create())

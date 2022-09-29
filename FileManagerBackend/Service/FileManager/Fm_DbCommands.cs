@@ -74,5 +74,35 @@ namespace FileManagerBackend.Service.FileManager
                 throw new HttpRequestException("<DatabaseError>");
             }
         }
+
+        public async Task<Fm_Share> GetShareByOwnerAndRelPath(int Owner, string RelPath)
+        {
+            try
+            {
+                OpenConnection();
+
+                Fm_Share Share = null;
+
+                string CommandString = "SELECT * FROM `Shares` WHERE `Owner` = ? AND `RelPath` = BINARY ?;";
+                var Command = new MySqlCommand(CommandString, MySqlConn);
+
+                Command.Parameters.AddWithValue("owner", Owner);
+                Command.Parameters.AddWithValue("relpath", RelPath);
+
+                using (var reader = await Command.ExecuteReaderAsync())
+                {
+                    while (reader.Read())
+                    {
+                        Share = new Fm_Share(Convert.ToInt32(reader["Id"]), reader["Link"].ToString(), Convert.ToInt32(reader["Owner"]), reader["RelPath"].ToString(), Convert.ToBoolean(reader["IsFile"]), Convert.ToInt32(reader["UsageCount"]), Convert.ToBoolean(reader["FileExist"]));
+                    }
+                }
+
+                return Share;
+            }
+            catch
+            {
+                throw new HttpRequestException("<DatabaseError>");
+            }
+        }
     }
 }

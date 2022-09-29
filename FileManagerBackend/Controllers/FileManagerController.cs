@@ -20,7 +20,7 @@ namespace FileManagerBackend.Controllers
         private readonly ILogger<FileManagerController> _logger;
         private readonly IConfiguration _Configuration;
 
-        //<LoginError>, <DatabaseError>, <LoggedOut>, <NotLoggedIn>, <ListError>, <DeleteError>,  <CopyError>, <CopySuccessful>, <DeleteSuccessful> || <FolderCreateSucessful>, <FolderCreateError>, FolderDeleteError,FolderDeleteSucessful || UploadSucessful, UploadError || "<DownloadError>", FileError || RenameSucessfull, "<RenameError>"
+        //<LoginError>, <DatabaseError>, <LoggedOut>, <NotLoggedIn>, <ListError>, <DeleteError>,  <CopyError>, <CopySuccessful>, <DeleteSuccessful> || <FolderCreateSucessful>, <FolderCreateError>, FolderDeleteError,FolderDeleteSucessful || UploadSucessful, UploadError || "<DownloadError>", FileError || RenameSucessfull, "<RenameError>", "<ShareError>"
 
         public FileManagerController(ILogger<FileManagerController> logger, IConfiguration configuration)
         {
@@ -623,28 +623,38 @@ namespace FileManagerBackend.Controllers
                     try
                     {
                         SharePath = SharePath.TrimStart('/');
-                        SharePath = Path.Combine(ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).RootPath, SharePath);
+                        Fm_User User = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject"));
 
-                        bool IsFile = false;
+                        Fm_Share ExistingLink = await Fm_Share.GetShareByRelPathAndOwner(User.Id, SharePath);
 
-                        if (System.IO.File.Exists(SharePath))
+                        if (ExistingLink != null)
                         {
-                            IsFile = true;
-                        }
-                        else if (System.IO.Directory.Exists(SharePath))
+                            return new ResponseModel(false, ExistingLink.Link);
+                        } else
                         {
-                            IsFile=false;
+                            string SharePathFullPath = Path.Combine(User.RootPath, SharePath);
+
+                            bool IsFile = false;
+
+                            if (System.IO.File.Exists(SharePathFullPath))
+                            {
+                                IsFile = true;
+                            }
+                            else if (System.IO.Directory.Exists(SharePathFullPath))
+                            {
+                                IsFile = false;
+                            }
+                            else
+                            {
+                                return new ResponseModel(true, "<ShareError>");
+                            }
+
+                            int OwnerId = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).Id;
+
+                            Fm_Share NewShare = await Fm_Share.CreateNewShare(OwnerId, SharePath, IsFile);
+
+                            return new ResponseModel(false, NewShare.Link);
                         }
-                        else
-                        {
-                            return new ResponseModel(true, "<ShareError>");
-                        }
-
-                        int OwnerId = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).Id;
-
-                        Fm_Share NewShare = await Fm_Share.CreateNewShare(OwnerId, SharePath,IsFile);
-
-                        return new ResponseModel(true, NewShare.Link);
                     }
                     catch (Exception e)
                     {
