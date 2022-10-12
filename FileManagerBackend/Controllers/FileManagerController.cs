@@ -20,7 +20,7 @@ namespace FileManagerBackend.Controllers
         private readonly ILogger<FileManagerController> _logger;
         private readonly IConfiguration _Configuration;
 
-        //<LoginError>, <DatabaseError>, <LoggedOut>, <NotLoggedIn>, <ListError>, <DeleteError>,  <CopyError>, <CopySuccessful>, <DeleteSuccessful> || <FolderCreateSucessful>, <FolderCreateError>, FolderDeleteError,FolderDeleteSucessful || UploadSucessful, UploadError || "<DownloadError>", FileError || RenameSucessfull, "<RenameError>", "<ShareError>"
+        //<LoginError>, <DatabaseError>, <LoggedOut>, <NotLoggedIn>, <ListError>, <DeleteError>,  <CopyError>, <CopySuccessful>, <DeleteSuccessful> || <FolderCreateSucessful>, <FolderCreateError>, FolderDeleteError,FolderDeleteSucessful || UploadSucessful, UploadError || "<DownloadError>", FileError || RenameSucessfull, "<RenameError>", "<ShareError>", || "FileSizeError", "ChangePasswordFail", "ChangePasswordSuccess", "ChangePasswordNotMatch"
 
         public FileManagerController(ILogger<FileManagerController> logger, IConfiguration configuration)
         {
@@ -36,9 +36,8 @@ namespace FileManagerBackend.Controllers
             try
             {
                 Fm_User User = await Fm_User.GetByUsername(Username);
-                string asd = MD5Hash(Password);
                 await Task.Delay(1500);
-                if (User.Password != MD5Hash(Password))
+                if (User.Password != MD5Hash(Password + "#" + User.Id))
                 {
                     throw new HttpRequestException("<LoginError>");
                 }
@@ -673,6 +672,193 @@ namespace FileManagerBackend.Controllers
                 return new ResponseModel(true, "<NotLoggedIn>");
             }
         }
+
+        [Route("GetTextFile")]
+        [HttpPost]
+        public async Task<ResponseModel> GetTextFile(string FilePath)
+        {
+
+            if (IsLoggedIn())
+            {
+                try
+                {
+
+                    string UserPath = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).RootPath;
+
+                    if (!FilePath.Contains(".."))
+                    {
+                        FilePath = FilePath.TrimStart('/');
+                        FilePath = FilePath.TrimEnd('/');
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Prevented access to subfolder, attempted by user: " + ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject")).Username);
+                        return new ResponseModel(true, "<FileError>");
+                    }
+
+                    string FullPath = System.IO.Path.Combine(UserPath, FilePath);
+                    FileInfo File = new FileInfo(FullPath);
+
+                    if (File.Exists)
+                    {
+                        if (File.Length <= 1000000)
+                        {
+                            string FileContent = await File.OpenText().ReadToEndAsync();
+                            return new ResponseModel(false, FileContent);
+                        } else
+                        {
+                            return new ResponseModel(true, "<FileSizeError>");
+                        }
+                    } else
+                    {
+                        return new ResponseModel(true, "<FileError>");
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError("Download error: " + e.ToString());
+
+                    return new ResponseModel(true, "<FileError>");
+                }
+            }
+            else
+            {
+                return new ResponseModel(true, "<NotLoggedIn>");
+            }
+        }
+
+        [Route("ChangePassword")]
+        [HttpPost]
+        public async Task<ResponseModel> ChangePassword(string OldPassword, string NewPassword)
+        {
+
+            if (IsLoggedIn())
+            {
+                try
+                {
+                    Fm_User UserO = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject"));
+                    if (UserO.Password == MD5Hash(OldPassword + "#" + UserO.Id))
+                    {
+                        bool result = await UserO.SetPassword(NewPassword);
+                        if (result)
+                        {
+                            HttpContext.Session.SetString("UserObject", ToJSONString(User));
+                            return new ResponseModel(false, "<ChangePasswordSuccess>");
+                        } else
+                        {
+                            return new ResponseModel(true, "<ChangePasswordFail>");
+                        }
+                    } else
+                    {
+                        return new ResponseModel(true, "<ChangePasswordNotMatch>");
+                    }
+                    
+                } catch
+                {
+                    return new ResponseModel(true, "<ChangePasswordFail>");
+                }
+            }
+            else
+            {
+                return new ResponseModel(true, "<NotLoggedIn>");
+            }
+        }
+
+        [Route("ListAllShares")]
+        [HttpPost]
+        public async Task<ResponseModel> ListAllShares()
+        {
+
+            if (IsLoggedIn())
+            {
+                try
+                {
+                    Fm_User UserO = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject"));
+
+                    Fm_Share[] Shares = await Fm_Share.GetSharesByUserId(UserO.Id);
+
+                    return new ResponseModel(false, Shares);
+                }
+                catch
+                {
+                    return new ResponseModel(true, "<ListError>");
+                }
+            }
+            else
+            {
+                return new ResponseModel(true, "<NotLoggedIn>");
+            }
+        }
+
+        [Route("DeleteShareById")]
+        [HttpPost]
+        public async Task<ResponseModel> DeleteShareById(int Id)
+        {
+
+            if (IsLoggedIn())
+            {
+                try
+                {
+                    Fm_User UserO = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject"));
+
+                    Fm_Share Share = await Fm_Share.GetShareById(Id);
+
+                    if (Share.Owner == UserO.Id)
+                    {
+                        bool Result = await Share.Delete();
+                        if (Result)
+                        {
+                            return new ResponseModel(false, "<DeleteSuccessful>");
+                        }
+                        else
+                        {
+                            return new ResponseModel(true, "<DeleteError>");
+                        }
+                    }
+                    else
+                    {
+                        return new ResponseModel(true, "<DeleteError>");
+                    }
+                }
+                catch
+                {
+                    return new ResponseModel(true, "<DeleteError>");
+                }
+            }
+            else
+            {
+                return new ResponseModel(true, "<NotLoggedIn>");
+            }
+        }
+
+        [Route("DeleteAllInvalidShare")]
+        [HttpPost]
+        public async Task<ResponseModel> DeleteAllInvalidShare()
+        {
+
+            if (IsLoggedIn())
+            {
+                try
+                {
+                    Fm_User UserO = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject"));
+
+                    Fm_Share.DeleteAllInvalid(UserO.Id);
+
+                    return new ResponseModel(false, "<DeleteSuccessful>");
+                }
+                catch
+                {
+                    return new ResponseModel(true, "<DeleteError>");
+                }
+            }
+            else
+            {
+                return new ResponseModel(true, "<NotLoggedIn>");
+            }
+        }
+
+
+
 
 
 

@@ -26,6 +26,13 @@ namespace FileManagerBackend.Model.FileManager
 
         }
 
+        public async Task<bool> Delete()
+        {
+            Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
+
+            return await fm_DbCommands.DeleteShareById(this.Id);
+        }
+
         public static async Task<Fm_Share> CreateNewShare(int Owner, string RelPath, bool IsFile)
         {
             Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
@@ -40,6 +47,24 @@ namespace FileManagerBackend.Model.FileManager
         {
             Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
             return await fm_DbCommands.GetShareByOwnerAndRelPath( Owner, RelPath);
+        }
+
+        public static async Task<Fm_Share[]> GetSharesByUserId(int UserId)
+        {
+            Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
+            return await fm_DbCommands.GetSharesByUserId(UserId);
+        }
+
+        public static async Task<Fm_Share> GetShareById(int Id)
+        {
+            Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
+            return await fm_DbCommands.GetShareById(Id);
+        }
+
+        public static async Task<bool> DeleteAllInvalid(int UserId)
+        {
+            Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
+            return await fm_DbCommands.DeleteAllInvalidShare(UserId);
         }
 
         private static string MD5Hash(string input)

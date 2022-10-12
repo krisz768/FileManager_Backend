@@ -27,5 +27,14 @@ namespace FileManagerBackend.Model.FileManager
             }
             return User;
         }
+
+        public async Task<bool> SetPassword(string NewPassword)
+        {
+            Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
+            bool Result = await fm_DbCommands.ChangePasswordById(this.Id, NewPassword);
+            if (Result)
+                this.Password = NewPassword;
+            return Result;
+        }
     }
 }

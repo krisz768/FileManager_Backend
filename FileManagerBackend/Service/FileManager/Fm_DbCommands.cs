@@ -104,5 +104,127 @@ namespace FileManagerBackend.Service.FileManager
                 throw new HttpRequestException("<DatabaseError>");
             }
         }
+
+        public async Task<bool> ChangePasswordById(int UserId, string NewPassMD5)
+        {
+            try
+            {
+                OpenConnection();
+
+                string CommandString = "UPDATE `Users` SET `Password`=? WHERE `Id` = ?;";
+                var Command = new MySqlCommand(CommandString, MySqlConn);
+
+                Command.Parameters.AddWithValue("password", NewPassMD5);
+                Command.Parameters.AddWithValue("id", UserId);
+
+                int Result = await Command.ExecuteNonQueryAsync();
+
+                return Result == 1 ? true : false;
+            }
+            catch
+            {
+                throw new HttpRequestException("<DatabaseError>");
+            }
+        }
+
+        public async Task<Fm_Share[]> GetSharesByUserId(int UserId)
+        {
+            try
+            {
+                OpenConnection();
+
+                List<Fm_Share> Shares = new List<Fm_Share>();
+
+                string CommandString = "SELECT * FROM `Shares` WHERE `Owner` = ?";
+                var Command = new MySqlCommand(CommandString, MySqlConn);
+
+                Command.Parameters.AddWithValue("owner", UserId);
+
+                using (var reader = await Command.ExecuteReaderAsync())
+                {
+                    while (reader.Read())
+                    {
+                        Shares.Add(new Fm_Share(Convert.ToInt32(reader["Id"]), reader["Link"].ToString(), Convert.ToInt32(reader["Owner"]), reader["RelPath"].ToString(), Convert.ToBoolean(reader["IsFile"]), Convert.ToInt32(reader["UsageCount"]), Convert.ToBoolean(reader["FileExist"])));
+                    }
+                }
+
+                return Shares.ToArray();
+            }
+            catch
+            {
+                throw new HttpRequestException("<DatabaseError>");
+            }
+        }
+
+        public async Task<Fm_Share> GetShareById(int Id)
+        {
+            try
+            {
+                OpenConnection();
+
+                Fm_Share Share = null;
+
+                string CommandString = "SELECT * FROM `Shares` WHERE `Id` = ?;";
+                var Command = new MySqlCommand(CommandString, MySqlConn);
+
+                Command.Parameters.AddWithValue("id", Id);
+
+                using (var reader = await Command.ExecuteReaderAsync())
+                {
+                    while (reader.Read())
+                    {
+                        Share = new Fm_Share(Convert.ToInt32(reader["Id"]), reader["Link"].ToString(), Convert.ToInt32(reader["Owner"]), reader["RelPath"].ToString(), Convert.ToBoolean(reader["IsFile"]), Convert.ToInt32(reader["UsageCount"]), Convert.ToBoolean(reader["FileExist"]));
+                    }
+                }
+
+                return Share;
+            }
+            catch
+            {
+                throw new HttpRequestException("<DatabaseError>");
+            }
+        }
+
+        public async Task<bool> DeleteShareById(long Id)
+        {
+            try
+            {
+                OpenConnection();
+
+                string CommandString = "DELETE FROM `Shares` WHERE `Id` = ?;";
+                var Command = new MySqlCommand(CommandString, MySqlConn);
+
+                Command.Parameters.AddWithValue("id", Id);
+
+                int Result = await Command.ExecuteNonQueryAsync();
+
+                return Result == 1 ? true : false;
+            }
+            catch
+            {
+                throw new HttpRequestException("<DatabaseError>");
+            }
+        }
+
+        public async Task<bool> DeleteAllInvalidShare(int UserId)
+        {
+            try
+            {
+                OpenConnection();
+
+                string CommandString = "DELETE FROM `Shares` WHERE `Owner` = ? AND `FileExist` = 0;";
+                var Command = new MySqlCommand(CommandString, MySqlConn);
+
+                Command.Parameters.AddWithValue("owner", UserId);
+
+                int Result = await Command.ExecuteNonQueryAsync();
+
+                return true;
+            }
+            catch
+            {
+                throw new HttpRequestException("<DatabaseError>");
+            }
+        }
     }
 }
