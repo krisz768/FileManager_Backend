@@ -51,6 +51,35 @@ namespace FileManagerBackend.Service.FileManager
             }
         }
 
+        public async Task<Fm_User> GetUserById(int Id)
+        {
+            try
+            {
+                OpenConnection();
+
+                Fm_User User = null;
+
+                string CommandString = "SELECT * FROM `Users` WHERE `Id` = ?;";
+                var Command = new MySqlCommand(CommandString, MySqlConn);
+
+                Command.Parameters.AddWithValue("id", Id);
+
+                using (var reader = await Command.ExecuteReaderAsync())
+                {
+                    while (reader.Read())
+                    {
+                        User = new Fm_User(Convert.ToInt32(reader["Id"]), reader["Username"].ToString(), reader["Password"].ToString(), reader["RootPath"].ToString());
+                    }
+                }
+
+                return User;
+            }
+            catch
+            {
+                throw new HttpRequestException("<DatabaseError>");
+            }
+        }
+
         public async Task<long> CreateShare(string Link, int Owner, string RelPath, bool IsFile)
         {
             try
@@ -220,6 +249,35 @@ namespace FileManagerBackend.Service.FileManager
                 int Result = await Command.ExecuteNonQueryAsync();
 
                 return true;
+            }
+            catch
+            {
+                throw new HttpRequestException("<DatabaseError>");
+            }
+        }
+
+        public async Task<Fm_Share> GetShareByLink(string Link)
+        {
+            try
+            {
+                OpenConnection();
+
+                Fm_Share Share = null;
+
+                string CommandString = "SELECT * FROM `Shares` WHERE `Link` = BINARY ?;";
+                var Command = new MySqlCommand(CommandString, MySqlConn);
+
+                Command.Parameters.AddWithValue("link", Link);
+
+                using (var reader = await Command.ExecuteReaderAsync())
+                {
+                    while (reader.Read())
+                    {
+                        Share = new Fm_Share(Convert.ToInt32(reader["Id"]), reader["Link"].ToString(), Convert.ToInt32(reader["Owner"]), reader["RelPath"].ToString(), Convert.ToBoolean(reader["IsFile"]), Convert.ToInt32(reader["UsageCount"]), Convert.ToBoolean(reader["FileExist"]));
+                    }
+                }
+
+                return Share;
             }
             catch
             {

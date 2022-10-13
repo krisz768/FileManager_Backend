@@ -28,6 +28,13 @@ namespace FileManagerBackend.Model.FileManager
             return User;
         }
 
+        public static async Task<Fm_User> GetById(int Id)
+        {
+            Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
+            Fm_User User = await fm_DbCommands.GetUserById(Id);
+            return User;
+        }
+
         public async Task<bool> SetPassword(string NewPassword)
         {
             Fm_DbCommands fm_DbCommands = new Fm_DbCommands();

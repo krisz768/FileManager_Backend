@@ -67,6 +67,12 @@ namespace FileManagerBackend.Model.FileManager
             return await fm_DbCommands.DeleteAllInvalidShare(UserId);
         }
 
+        public static async Task<Fm_Share> GetShareByLink(string Link)
+        {
+            Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
+            return await fm_DbCommands.GetShareByLink(Link);
+        }
+
         private static string MD5Hash(string input)
         {
             using (var md5 = MD5.Create())

@@ -20,7 +20,7 @@ namespace FileManagerBackend.Controllers
         private readonly ILogger<FileManagerController> _logger;
         private readonly IConfiguration _Configuration;
 
-        //<LoginError>, <DatabaseError>, <LoggedOut>, <NotLoggedIn>, <ListError>, <DeleteError>,  <CopyError>, <CopySuccessful>, <DeleteSuccessful> || <FolderCreateSucessful>, <FolderCreateError>, FolderDeleteError,FolderDeleteSucessful || UploadSucessful, UploadError || "<DownloadError>", FileError || RenameSucessfull, "<RenameError>", "<ShareError>", || "FileSizeError", "ChangePasswordFail", "ChangePasswordSuccess", "ChangePasswordNotMatch"
+        //<LoginError>, <DatabaseError>, <LoggedOut>, <NotLoggedIn>, <ListError>, <DeleteError>,  <CopyError>, <CopySuccessful>, <DeleteSuccessful> || <FolderCreateSucessful>, <FolderCreateError>, FolderDeleteError,FolderDeleteSucessful || UploadSucessful, UploadError || "<DownloadError>", FileError || RenameSucessfull, "<RenameError>", "<ShareError>", || "FileSizeError", "ChangePasswordFail", "ChangePasswordSuccess", "ChangePasswordNotMatch", "ShareLoadError"
 
         public FileManagerController(ILogger<FileManagerController> logger, IConfiguration configuration)
         {
@@ -535,7 +535,7 @@ namespace FileManagerBackend.Controllers
 
                     var ContentTypeProvider = new FileExtensionContentTypeProvider();
                     string contentType;
-                    if (!ContentTypeProvider.TryGetContentType(FilePath, out contentType))
+                    if (!ContentTypeProvider.TryGetContentType(Path.Combine(UserPath, FilePath), out contentType))
                     {
                         contentType = "application/octet-stream";
                     }
@@ -854,6 +854,134 @@ namespace FileManagerBackend.Controllers
             else
             {
                 return new ResponseModel(true, "<NotLoggedIn>");
+            }
+        }
+
+        [Route("GetShareFileType")]
+        [HttpPost]
+        public async Task<ResponseModel> GetShareFileType(string ShareLink)
+        {
+            try
+            {
+                Fm_Share share = await Fm_Share.GetShareByLink(ShareLink);
+
+                if (share != null)
+                {
+                    string contentType;
+
+                    if (share.IsFile)
+                    {
+                        string UserPath = (await Fm_User.GetById(share.Owner)).RootPath;
+
+                        var ContentTypeProvider = new FileExtensionContentTypeProvider();
+                        
+                        if (!ContentTypeProvider.TryGetContentType(Path.Combine(UserPath, share.RelPath), out contentType))
+                        {
+                            contentType = "application/octet-stream";
+                        }
+                    } else
+                    {
+                        contentType = "FOLDER";
+                    }
+
+                    return new ResponseModel(false, contentType);
+
+                } else
+                {
+                    return new ResponseModel(true, "<ShareLoadError>");
+                } 
+
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Download error: " + e.ToString());
+
+                return new ResponseModel(true, "<ShareLoadError>");
+            }
+        }
+
+        [Route("DownloadSahreFile")]
+        [HttpGet]
+        [DisableRequestSizeLimit]
+        public async Task<IActionResult> DownloadShareFileGet(string ShareLink)
+        {
+            try
+            {
+                var share = await Fm_Share.GetShareByLink(ShareLink);
+
+                if (share != null)
+                {
+                    string UserPath = (await Fm_User.GetById(share.Owner)).RootPath;
+
+
+                    var ContentTypeProvider = new FileExtensionContentTypeProvider();
+                    string contentType;
+                    if (!ContentTypeProvider.TryGetContentType(Path.Combine(UserPath, share.RelPath), out contentType))
+                    {
+                        contentType = "application/octet-stream";
+                    }
+
+                    var DownloadFile = new FileStream(Path.Combine(UserPath, share.RelPath), FileMode.Open, FileAccess.Read);
+                    var RetObject = File(DownloadFile, contentType, Path.GetFileName(Path.Combine(UserPath, share.RelPath)));
+                    RetObject.EnableRangeProcessing = true;
+                    return RetObject;
+                } else
+                {
+                    return Problem("<ShareLoadError>");
+                }
+
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Download error: " + e.ToString());
+
+                return Problem("<ShareLoadError>");
+            }
+        }
+
+        [Route("GetShareTextFile")]
+        [HttpPost]
+        public async Task<ResponseModel> GetShareTextFile(string ShareLink)
+        {
+
+            try
+            {
+
+                var share = await Fm_Share.GetShareByLink(ShareLink);
+
+                if (share != null)
+                {
+                    string UserPath = (await Fm_User.GetById(share.Owner)).RootPath;
+
+                    string FullPath = System.IO.Path.Combine(UserPath, share.RelPath);
+                    FileInfo File = new FileInfo(FullPath);
+
+                    if (File.Exists)
+                    {
+                        if (File.Length <= 1000000)
+                        {
+                            string FileContent = await File.OpenText().ReadToEndAsync();
+                            return new ResponseModel(false, FileContent);
+                        }
+                        else
+                        {
+                            return new ResponseModel(true, "<FileSizeError>");
+                        }
+                    }
+                    else
+                    {
+                        return new ResponseModel(true, "<FileError>");
+                    }
+                } else
+                {
+                    return new ResponseModel(true, "<ShareLoadError>");
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Download error: " + e.ToString());
+
+                return new ResponseModel(true, "<ShareLoadError>");
             }
         }
 
