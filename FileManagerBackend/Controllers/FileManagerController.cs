@@ -20,7 +20,7 @@ namespace FileManagerBackend.Controllers
         private readonly ILogger<FileManagerController> _logger;
         private readonly IConfiguration _Configuration;
 
-        //<LoginError>, <DatabaseError>, <LoggedOut>, <NotLoggedIn>, <ListError>, <DeleteError>,  <CopyError>, <CopySuccessful>, <DeleteSuccessful> || <FolderCreateSucessful>, <FolderCreateError>, FolderDeleteError,FolderDeleteSucessful || UploadSucessful, UploadError || "<DownloadError>", FileError || RenameSucessfull, "<RenameError>", "<ShareError>", || "FileSizeError", "ChangePasswordFail", "ChangePasswordSuccess", "ChangePasswordNotMatch", "ShareLoadError"
+        //<LoginError>, <DatabaseError>, <LoggedOut>, <NotLoggedIn>, <ListError>, <DeleteError>,  <CopyError>, <CopySuccessful>, <DeleteSuccessful> || <FolderCreateSucessful>, <FolderCreateError>, FolderDeleteError,FolderDeleteSucessful || UploadSucessful, UploadError || "<DownloadError>", FileError || RenameSucessfull, "<RenameError>", "<ShareError>", || "FileSizeError", "ChangePasswordFail", "ChangePasswordSuccess", "ChangePasswordNotMatch", "ShareLoadError", ChangePasswordFail8Char
 
         public FileManagerController(ILogger<FileManagerController> logger, IConfiguration configuration)
         {
@@ -739,10 +739,15 @@ namespace FileManagerBackend.Controllers
                     Fm_User UserO = ToJSONObject<Fm_User>(HttpContext.Session.GetString("UserObject"));
                     if (UserO.Password == MD5Hash(OldPassword + "#" + UserO.Id))
                     {
-                        bool result = await UserO.SetPassword(NewPassword);
+                        if (NewPassword.Length < 8)
+                        {
+                            return new ResponseModel(true, "<ChangePasswordFail8Char>");
+                        }
+
+                        bool result = await UserO.SetPassword(MD5Hash(NewPassword + "#" + UserO.Id));
                         if (result)
                         {
-                            HttpContext.Session.SetString("UserObject", ToJSONString(User));
+                            HttpContext.Session.SetString("UserObject", ToJSONString(UserO));
                             return new ResponseModel(false, "<ChangePasswordSuccess>");
                         } else
                         {
