@@ -797,9 +797,8 @@ namespace FileManagerBackend.Controllers
 
         [Route("DeleteShareById")]
         [HttpPost]
-        public async Task<ResponseModel> DeleteShareById(int Id)
+        public async Task<ResponseModel> DeleteShareById(long Id)
         {
-
             if (IsLoggedIn())
             {
                 try
@@ -825,7 +824,7 @@ namespace FileManagerBackend.Controllers
                         return new ResponseModel(true, "<DeleteError>");
                     }
                 }
-                catch
+                catch (Exception e)
                 {
                     return new ResponseModel(true, "<DeleteError>");
                 }

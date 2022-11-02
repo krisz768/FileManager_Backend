@@ -55,7 +55,7 @@ namespace FileManagerBackend.Model.FileManager
             return await fm_DbCommands.GetSharesByUserId(UserId);
         }
 
-        public static async Task<Fm_Share> GetShareById(int Id)
+        public static async Task<Fm_Share> GetShareById(long Id)
         {
             Fm_DbCommands fm_DbCommands = new Fm_DbCommands();
             return await fm_DbCommands.GetShareById(Id);

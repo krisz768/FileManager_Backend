@@ -185,7 +185,7 @@ namespace FileManagerBackend.Service.FileManager
             }
         }
 
-        public async Task<Fm_Share> GetShareById(int Id)
+        public async Task<Fm_Share> GetShareById(long Id)
         {
             try
             {
@@ -200,11 +200,16 @@ namespace FileManagerBackend.Service.FileManager
 
                 using (var reader = await Command.ExecuteReaderAsync())
                 {
-                    while (reader.Read())
+                    
+                    while (await reader.ReadAsync())
                     {
                         Share = new Fm_Share(Convert.ToInt32(reader["Id"]), reader["Link"].ToString(), Convert.ToInt32(reader["Owner"]), reader["RelPath"].ToString(), Convert.ToBoolean(reader["IsFile"]), Convert.ToInt32(reader["UsageCount"]), Convert.ToBoolean(reader["FileExist"]));
                     }
+
+                    
                 }
+
+                Console.WriteLine(Command);
 
                 return Share;
             }
